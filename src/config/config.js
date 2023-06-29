@@ -16,8 +16,11 @@ const _CONFIG = {
         "WORKSPACE": `${appRoot}/workspace`,
         "CONFIG": `${appRoot}/config/`,
         "DIST": `${appRoot}/workspace/${_curYear}-${_curMonthPadWithZero}-${_curDatePadWithZero}`,
+        "ZIP": '/zip',
+        "SOURCE": '/source'
     },
-    "MAX_NUM_OF_TAGS": 10
+    "MAX_NUM_OF_TAGS": 10,
+    "GITLAB_ALL_PROJECT_SUFFIX": '/api/v4/projects'
 }
 
 module.exports = _CONFIG;

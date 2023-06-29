@@ -1,18 +1,15 @@
 const axios = require('axios');
+const appRoot = require('app-root-path');
+const CONFIG = require(`${appRoot}/src/config/config`);
 
 class GitlabApiService {
-    _CONST = {
-        'GITLAB_PATH': process.env.GIT_PATH,
-        'GITLAB_TOKEN': process.env.GIT_TOKEN,
-        'GET_ALL_PROJECT_SUFFIX': "/api/v4/projects"
-    };
     _allGitProjectsData;
     _allGitProjects;
 
     constructor() {
         let _self = this;
-        if (!_self._CONST.GITLAB_PATH) throw new Error('process.env.GIT_PATH is undefined!');
-        if (!_self._CONST.GITLAB_TOKEN) throw new Error('process.env.GIT_TOKEN is undefined!');
+        if (!process.env.GIT_PATH) throw new Error('process.env.GIT_PATH is undefined!');
+        if (!process.env.GIT_TOKEN) throw new Error('process.env.GIT_TOKEN is undefined!');
     }
 
     async init() {
@@ -22,9 +19,9 @@ class GitlabApiService {
 
     getAllGitProjectsData = async () => {
         let _self = this,
-            _url = `${_self._CONST.GITLAB_PATH}${_self._CONST.GET_ALL_PROJECT_SUFFIX}`,
+            _url = `${process.env.GIT_PATH}${CONFIG.GITLAB_ALL_PROJECT_SUFFIX}`,
             _headers = {
-                "PRIVATE-TOKEN": _self._CONST.GITLAB_TOKEN
+                "PRIVATE-TOKEN": process.env.GIT_TOKEN
             },
             _result = await axios.get(_url, { headers: _headers });
 

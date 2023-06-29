@@ -39,7 +39,7 @@ class GitBackupController {
     async startBackup() {
         Messenger.openClose('START BACKUP');
         let _self = this;
-        await _self._workspace.createFolder(_self._allGitProjects);
+        await _self._workspace.createEachSourceFolder(_self._allGitProjects);
         await _self._workspace.cloneAll();
         Messenger.openClose('/START BACKUP');
     }
@@ -49,9 +49,9 @@ class GitBackupController {
         let _self = this;
         await _self._workspace.zipAll();
         await _self._workspace.updateAllRepoTag();
-        await _self._workspace.removeAllClonedFolder();
+        // await _self._workspace.removeAllClonedFolder();
         let _codeBackupResultStr = JSON.stringify(_self._workspace.getBackupResult());
-        await fs.promises.writeFile(`${CONFIG.DIRECTORY.DIST}/result.json`, _codeBackupResultStr)
+        await fs.promises.writeFile(`${CONFIG.DIRECTORY.DIST}/${CONFIG.DIRECTORY.SOURCE}/result.json`, _codeBackupResultStr)
         Messenger.openClose('/POST BACKUP ACTION');
     }
 }

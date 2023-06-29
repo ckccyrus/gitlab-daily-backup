@@ -8,10 +8,6 @@ const CONFIG = require(`${appRoot}/src/config/config`);
 const Messenger = require(`${appRoot}/src/utils/messenger`);
 
 class Workspace {
-    _CONST = {
-        'GIT_TOKEN': process.env.GIT_TOKEN,
-        'GIT_USERNAME': process.env.GIT_USERNAME
-    };
     _gitAuth = {
         username: undefined,
         token: undefined
@@ -22,8 +18,8 @@ class Workspace {
 
     constructor() {
         let _self = this;
-        if (!_self._CONST.GIT_TOKEN) throw new Error('process.env.GIT_TOKEN is undefined!');
-        if (!_self._CONST.GIT_USERNAME) throw new Error('process.env.GIT_USERNAME is undefined!');
+        if (!process.env.GIT_TOKEN) throw new Error('process.env.GIT_TOKEN is undefined!');
+        if (!process.env.GIT_USERNAME) throw new Error('process.env.GIT_USERNAME is undefined!');
     }
 
     async init() {
@@ -31,13 +27,13 @@ class Workspace {
         _self.setGitAuth();
         await _self.initGit();
         await _self.setupWorkspace();
-        await _self.setDistFolder();
+        await _self.createDistFolder();
     }
 
     setGitAuth = () => {
         let _self = this;
-        _self._gitAuth.username = _self._CONST.GIT_USERNAME;
-        _self._gitAuth.token = encodeURIComponent(_self._CONST.GIT_TOKEN);
+        _self._gitAuth.username = process.env.GIT_USERNAME;
+        _self._gitAuth.token = encodeURIComponent(process.env.GIT_TOKEN);
     }
 
     initGit = async () => {
@@ -75,15 +71,19 @@ class Workspace {
         }
     }
 
-    setDistFolder = async () => {
+    createDistFolder = async () => {
         Messenger.openClose('SETUP DIST FOLDER');
         let _self = this,
             _workspaceLoc = CONFIG.DIRECTORY.WORKSPACE,
             _isWorkspaceExist = fs.existsSync(_workspaceLoc),
-            _distFolderLoc = CONFIG.DIRECTORY.DIST;
+            _distFolderLoc = CONFIG.DIRECTORY.DIST,
+            _sourceFolderLoc = path.join(CONFIG.DIRECTORY.DIST, CONFIG.DIRECTORY.SOURCE),
+            _zipFolderLoc = path.join(CONFIG.DIRECTORY.DIST, CONFIG.DIRECTORY.ZIP);
 
         if (_isWorkspaceExist) {
             await fs.promises.mkdir(_distFolderLoc);
+            await fs.promises.mkdir(_sourceFolderLoc);
+            await fs.promises.mkdir(_zipFolderLoc);
         } else {
             throw new Error('[SETUP_DIST_FOLDER_FAIL]');
         }
@@ -91,13 +91,16 @@ class Workspace {
         Messenger.openClose('/SETUP DIST FOLDER');
     }
 
-    async createFolder($allGitProjects) {
+    //---------------------------------------------------------------
+    //------------------------------Start backup---------------------------------
+
+    async createEachSourceFolder($allGitProjects) {
         let _self = this;
         _self._allGitProjects = $allGitProjects;
 
         for (let i = 0; i < _self._allGitProjects.length; i++) {
             const _repo = _self._allGitProjects[i];
-            await fs.promises.mkdir(path.join(CONFIG.DIRECTORY.DIST, _repo.name));
+            await fs.promises.mkdir(path.join(CONFIG.DIRECTORY.DIST, CONFIG.DIRECTORY.SOURCE, _repo.name));
         }
     }
 
@@ -117,7 +120,7 @@ class Workspace {
             _repoPathWithoutHttps = removeHttpsPrefix($repoObj.path),
             _repoUsername = _self._gitAuth.username,
             _repoToken = _self._gitAuth.token,
-            _cloneLocation = path.join(CONFIG.DIRECTORY.DIST, _repoName),
+            _cloneLocation = path.join(CONFIG.DIRECTORY.DIST, CONFIG.DIRECTORY.SOURCE,_repoName),
             _encodedGitUri = `https://${_repoUsername}:${_repoToken}@${_repoPathWithoutHttps}`;
 
         try {
@@ -138,12 +141,15 @@ class Workspace {
         }
     }
 
+    //---------------------------------------------------------------
+    //------------------------------Post backup action---------------------------------
+
     async zipAll() {
         Messenger.openClose('ZIP ALL REPO');
         let _self = this;
         for (let i = 0; i < _self._allGitProjects.length; i++) {
             let _repo = _self._allGitProjects[i],
-                _repoWorkspacePath = path.join(CONFIG.DIRECTORY.DIST, _repo.name),
+                _repoWorkspacePath = path.join(CONFIG.DIRECTORY.DIST, CONFIG.DIRECTORY.SOURCE, _repo.name),
                 _repoWorkspaceFolder
 
             try {
@@ -153,21 +159,22 @@ class Workspace {
                 return;
             }
             if (!_repoWorkspaceFolder) return;
-            await _self.createZip(CONFIG.DIRECTORY.DIST, _repo.name);
+            await _self.createZip(path.join(CONFIG.DIRECTORY.DIST, CONFIG.DIRECTORY.SOURCE), _repo.name);
         }
         Messenger.openClose('/ZIP ALL REPO');
     }
 
     createZip = async ($srcDir, $folder) => {
         let myPromise = new Promise(async (resolve, reject) => {
-            let _curPath = path.join($srcDir, $folder);
+            let _curPath = path.join($srcDir, $folder),
+                _zipPath = path.join(CONFIG.DIRECTORY.DIST, CONFIG.DIRECTORY.ZIP, $folder);
             Messenger.print(`CREATING ZIP ... (${_curPath})`);
             // let _totalSize = await _self.getFolderTotalSize(_curPath);
             // let _compressedSize = 0
             // let _progressTrackerInterval;
             // Messenger.print(`TOTAL SIZE: ${_totalSize}`);
 
-            let _ws = fs.createWriteStream(_curPath + '.zip');
+            let _ws = fs.createWriteStream(_zipPath + '.zip');
             let _archive = archiver('zip');
 
             _ws.on('close', function () {
@@ -232,7 +239,7 @@ class Workspace {
         }
 
         function getDistLocation($repoName) {
-            return path.join(CONFIG.DIRECTORY.DIST, $repoName);
+            return path.join(CONFIG.DIRECTORY.DIST, CONFIG.DIRECTORY.SOURCE, $repoName);
         }
 
         async function checkZipCreated($repoName) {
@@ -248,28 +255,28 @@ class Workspace {
         }
     }
 
-    async removeAllClonedFolder() {
-        Messenger.openClose('REMOVE ALL CLONE FOLDER');
-        let _self = this;
-        for (let i = 0; i < _self._allGitProjects.length; i++) {
-            let _repo = _self._allGitProjects[i],
-                _repoName = _repo.name,
-                _repoWorkspacePath = path.join(CONFIG.DIRECTORY.DIST, _repoName),
-                _repoWorkspaceFolder;
+    // async removeAllClonedFolder() {
+    //     Messenger.openClose('REMOVE ALL CLONE FOLDER');
+    //     let _self = this;
+    //     for (let i = 0; i < _self._allGitProjects.length; i++) {
+    //         let _repo = _self._allGitProjects[i],
+    //             _repoName = _repo.name,
+    //             _repoWorkspacePath = path.join(CONFIG.DIRECTORY.DIST, _repoName),
+    //             _repoWorkspaceFolder;
 
-            try {
-                _repoWorkspaceFolder = await fs.promises.readdir(_repoWorkspacePath)
-            } catch ($err) {
-                Messenger.error('ZIP_ALL_REPO_FAIL');
-                return;
-            }
+    //         try {
+    //             _repoWorkspaceFolder = await fs.promises.readdir(_repoWorkspacePath)
+    //         } catch ($err) {
+    //             Messenger.error('ZIP_ALL_REPO_FAIL');
+    //             return;
+    //         }
 
-            if (!_repoWorkspaceFolder) return;
-            await fs.promises.rm(_repoWorkspacePath, { recursive: true, force: true });
-        }
+    //         if (!_repoWorkspaceFolder) return;
+    //         await fs.promises.rm(_repoWorkspacePath, { recursive: true, force: true });
+    //     }
 
-        Messenger.openClose('/REMOVE ALL CLONE FOLDER');
-    }
+    //     Messenger.openClose('/REMOVE ALL CLONE FOLDER');
+    // }
 
     getBackupResult() {
         let _self = this;

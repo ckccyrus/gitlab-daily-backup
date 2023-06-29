@@ -125,7 +125,7 @@ class Workspace {
 
         try {
             Messenger.print(`START CLONING ${_repoName}...`);
-            await _self._git.clone(_encodedGitUri, _cloneLocation, { '--mirror': null });
+            await _self._git.clone(_encodedGitUri, _cloneLocation, { '--mirror': null, '--shared': null });
             Messenger.print(`FINISH CLONING ${_repoName}...`);
         } catch ($err) {
             // can't clone the git, maybe deleted or no access right

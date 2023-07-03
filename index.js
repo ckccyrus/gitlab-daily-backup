@@ -12,15 +12,17 @@ function getArgvValue($argv) {
 function checkArgv() {
     let _git_path = getArgvValue('GIT_PATH'),
         _git_username = getArgvValue('GIT_USERNAME'),
-        _git_token = getArgvValue('GIT_TOKEN');
+        _git_token = getArgvValue('GIT_TOKEN'),
+        _curDate = getArgvValue('CURDATE');
 
-    if (!_git_path || !_git_username || !_git_token) {
+    if (!_git_path || !_git_username || !_git_token || !_curDate) {
         throw (`Missing required argument:`);
     }
 
     process.env.GIT_PATH = _git_path;
     process.env.GIT_USERNAME = _git_username;
     process.env.GIT_TOKEN = _git_token;
+    process.env.CURDATE = _curDate;
 }
 
 async function main() {

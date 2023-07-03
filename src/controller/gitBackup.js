@@ -51,7 +51,7 @@ class GitBackupController {
         await _self._workspace.updateAllRepoTag();
         // await _self._workspace.removeAllClonedFolder();
         let _codeBackupResultStr = JSON.stringify(_self._workspace.getBackupResult());
-        await fs.promises.writeFile(`${CONFIG.DIRECTORY.DIST}/${CONFIG.DIRECTORY.SOURCE}/result.json`, _codeBackupResultStr)
+        await fs.promises.writeFile(`${CONFIG.DIRECTORY.DIST}/${process.env.CURDATE}/${CONFIG.DIRECTORY.SOURCE}/result.json`, _codeBackupResultStr)
         Messenger.openClose('/POST BACKUP ACTION');
     }
 }

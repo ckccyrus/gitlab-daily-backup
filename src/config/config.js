@@ -13,7 +13,7 @@ const _CONFIG = {
         "ROOT": appRoot,
         "WORKSPACE": `${appRoot}/workspace`,
         "CONFIG": `${appRoot}/config/`,
-        "DIST": `${appRoot}/workspace/${process.env.CURDATE}`,
+        "DIST": `${appRoot}/workspace/`,
         "ZIP": '/zip',
         "SOURCE": '/source'
     },

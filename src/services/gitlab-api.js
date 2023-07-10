@@ -19,7 +19,7 @@ class GitlabApiService {
 
     getAllGitProjectsData = async () => {
         let _self = this,
-            _url = `${process.env.GIT_PATH}${CONFIG.GITLAB_ALL_PROJECT_SUFFIX}`,
+            _url = `${process.env.GIT_PATH}${CONFIG.GITLAB_ALL_PROJECT_SUFFIX}?per_page=${CONFIG.MAX_NUM_OF_PROJECTS}`,
             _headers = {
                 "PRIVATE-TOKEN": process.env.GIT_TOKEN
             },

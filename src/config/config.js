@@ -18,7 +18,8 @@ const _CONFIG = {
         "SOURCE": '/source'
     },
     "MAX_NUM_OF_TAGS": 10,
-    "GITLAB_ALL_PROJECT_SUFFIX": '/api/v4/projects'
+    "GITLAB_ALL_PROJECT_SUFFIX": '/api/v4/projects',
+    "MAX_NUM_OF_PROJECTS": 100
 }
 
 module.exports = _CONFIG;

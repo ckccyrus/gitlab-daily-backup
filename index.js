@@ -31,7 +31,7 @@ async function main() {
 
     try {
         checkArgv();
-        
+
         let _gitBackupController = new GitBackupController();
         await _gitBackupController.init();
         await _gitBackupController.startBackup();

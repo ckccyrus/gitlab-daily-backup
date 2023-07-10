@@ -119,7 +119,7 @@ class Workspace {
             _repoPathWithoutHttps = removeHttpsPrefix($repoObj.path),
             _repoUsername = _self._gitAuth.username,
             _repoToken = _self._gitAuth.token,
-            _cloneLocation = path.join(CONFIG.DIRECTORY.DIST, process.env.CURDATE, CONFIG.DIRECTORY.SOURCE,_repoName),
+            _cloneLocation = path.join(CONFIG.DIRECTORY.DIST, process.env.CURDATE, CONFIG.DIRECTORY.SOURCE, _repoName),
             _encodedGitUri = `https://${_repoUsername}:${_repoToken}@${_repoPathWithoutHttps}`;
 
         try {
@@ -177,7 +177,7 @@ class Workspace {
 
             _output.on('close', () => {
                 console.log(`${_archive.pointer()} total bytes`);
-                Messenger.print[`WORKSPACE:FINISH ZIP: (${_curPath})`];
+                Messenger.print(`WORKSPACE:FINISH ZIP: (${_curPath})`);
                 resolve();
             });
 

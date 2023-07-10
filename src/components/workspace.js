@@ -24,19 +24,18 @@ class Workspace {
 
     async init() {
         let _self = this;
-        _self.setGitAuth();
-        await _self.initGit();
-        await _self.setupWorkspace();
-        await _self.createDistFolder();
+        _self._git = {};
+        _self._allGitProjects = [];
+        _self._backupResult = {};
     }
 
-    setGitAuth = () => {
+    setGitAuth() {
         let _self = this;
         _self._gitAuth.username = process.env.GIT_USERNAME;
         _self._gitAuth.token = encodeURIComponent(process.env.GIT_TOKEN);
     }
 
-    initGit = async () => {
+    async initGit() {
         let _self = this;
         _self._git = simpleGit({
             progress({ method, stage, progress }) {
@@ -45,8 +44,8 @@ class Workspace {
         });
     }
 
-    setupWorkspace = async () => {
-        Messenger.openClose('SETUP WORK SPACE');
+    async setupWorkspace() {
+        Messenger.openClose('WORKSPACE:SETUP WORK SPACE');
         let _self = this,
             _workspaceLoc = CONFIG.DIRECTORY.WORKSPACE,
             _isWorkspaceExist = fs.existsSync(_workspaceLoc);
@@ -56,7 +55,7 @@ class Workspace {
         }
         await fs.promises.mkdir(_workspaceLoc);
 
-        Messenger.openClose('/SETUP WORK SPACE');
+        Messenger.openClose('/WORKSPACE:SETUP WORK SPACE');
 
         async function clearWorkspace() {
             let _workspaceFolderStat = await fs.promises.lstat(_workspaceLoc),
@@ -65,14 +64,14 @@ class Workspace {
                 try {
                     await fs.promises.rm(_workspaceLoc, { recursive: true });
                 } catch ($err) {
-                    Messenger.error('[CLEAR_WORKSPACE_FAIL]');
+                    Messenger.error('WORKSPACE:[CLEAR_WORKSPACE_FAIL]');
                 }
             }
         }
     }
 
-    createDistFolder = async () => {
-        Messenger.openClose('SETUP DIST FOLDER');
+    async createDistFolder() {
+        Messenger.openClose('WORKSPACE:SETUP DIST FOLDER');
         let _self = this,
             _workspaceLoc = CONFIG.DIRECTORY.WORKSPACE,
             _isWorkspaceExist = fs.existsSync(_workspaceLoc),
@@ -85,10 +84,10 @@ class Workspace {
             await fs.promises.mkdir(_sourceFolderLoc);
             await fs.promises.mkdir(_zipFolderLoc);
         } else {
-            throw new Error('[SETUP_DIST_FOLDER_FAIL]');
+            throw new Error('WORKSPACE:[SETUP_DIST_FOLDER_FAIL]');
         }
 
-        Messenger.openClose('/SETUP DIST FOLDER');
+        Messenger.openClose('/WORKSPACE:SETUP DIST FOLDER');
     }
 
     //---------------------------------------------------------------
@@ -105,13 +104,13 @@ class Workspace {
     }
 
     async cloneAll() {
-        Messenger.openClose('CLONE ALL REPO');
+        Messenger.openClose('WORKSPACE:CLONE ALL REPO');
         let _self = this;
         for (let i = 0; i < _self._allGitProjects.length; i++) {
             const _repo = _self._allGitProjects[i];
             await _self.cloneRepo(_repo);
         }
-        Messenger.openClose('/CLONE ALL REPO');
+        Messenger.openClose('/WORKSPACE:CLONE ALL REPO');
     }
 
     cloneRepo = async ($repoObj) => {
@@ -145,7 +144,7 @@ class Workspace {
     //------------------------------Post backup action---------------------------------
 
     async zipAll() {
-        Messenger.openClose('ZIP ALL REPO');
+        Messenger.openClose('WORKSPACE:ZIP ALL REPO');
         let _self = this;
         for (let i = 0; i < _self._allGitProjects.length; i++) {
             let _repo = _self._allGitProjects[i],
@@ -161,44 +160,48 @@ class Workspace {
             if (!_repoWorkspaceFolder) return;
             await _self.createZip(path.join(CONFIG.DIRECTORY.DIST, process.env.CURDATE, CONFIG.DIRECTORY.SOURCE), _repo.name);
         }
-        Messenger.openClose('/ZIP ALL REPO');
+        Messenger.openClose('/WORKSPACE:ZIP ALL REPO');
     }
 
     createZip = async ($srcDir, $folder) => {
-        let myPromise = new Promise(async (resolve, reject) => {
-            let _curPath = path.join($srcDir, $folder),
-                _zipPath = path.join(CONFIG.DIRECTORY.DIST, process.env.CURDATE, CONFIG.DIRECTORY.ZIP, $folder);
+        let _curPath = path.join($srcDir, $folder),
+            _zipPath = path.join(CONFIG.DIRECTORY.DIST, process.env.CURDATE, CONFIG.DIRECTORY.ZIP, $folder);
+
+        return new Promise((resolve, reject) => {
             Messenger.print(`CREATING ZIP ... (${_curPath})`);
-            // let _totalSize = await _self.getFolderTotalSize(_curPath);
-            // let _compressedSize = 0
-            // let _progressTrackerInterval;
-            // Messenger.print(`TOTAL SIZE: ${_totalSize}`);
 
-            let _ws = fs.createWriteStream(_zipPath + '.zip');
-            let _archive = archiver('zip');
+            let _output = fs.createWriteStream(_zipPath + '.zip');
+            let _archive = archiver('zip', {
+                zlib: { level: 9 } // set compression level
+            });
 
-            _ws.on('close', function () {
-                Messenger.print[`FINISHED ZIP: (${_curPath})`];
-                // clearInterval(_progressTrackerInterval);
+            _output.on('close', () => {
+                console.log(`${_archive.pointer()} total bytes`);
+                Messenger.print[`WORKSPACE:FINISH ZIP: (${_curPath})`];
                 resolve();
             });
 
-            _archive.pipe(_ws);
+            _archive.on('warning', (err) => {
+                if (err.code === 'ENOENT') {
+                    console.warn(err);
+                } else {
+                    reject(err);
+                }
+            });
+
+            _archive.on('error', (err) => {
+                Messenger.print(`WORKSPACE:[FAIL_TO_ZIP]`);
+                reject(err);
+            });
+
+            _archive.pipe(_output);
             _archive.directory(_curPath, false);
             _archive.finalize();
-
-            // _progressTrackerInterval = setInterval(progressTracker, 1000);
-
-            // function progressTracker() {
-            //     let _processed = _archive.pointer();
-            //     Messenger.print(`ZIP PROGRESS (${_curPath}): ${(_processed / _totalSize * 100)}%`, true);
-            // }
-        });
-        return myPromise;
+        })
     }
 
     async updateAllRepoTag() {
-        Messenger.openClose('UPDATE ALL REPO TAG');
+        Messenger.openClose('WORKSPACE:UPDATE ALL REPO TAG');
         let _self = this,
             _result = JSON.parse(JSON.stringify(_self._allGitProjects));
 
@@ -219,7 +222,7 @@ class Workspace {
         _self._backupResult = _result;
 
         Messenger.print(JSON.stringify(_result, null, 4))
-        Messenger.openClose('/UPDATE ALL REPO TAG');
+        Messenger.openClose('/WORKSPACE:UPDATE ALL REPO TAG');
 
         async function getAllTagByHashArr($allTagHashArr, $repoName) {
             let _allTagArr = [];

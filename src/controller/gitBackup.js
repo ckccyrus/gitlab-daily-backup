@@ -33,6 +33,10 @@ class GitBackupController {
         let _self = this;
         _self._workspace = new Workspace();
         await _self._workspace.init();
+        _self._workspace.setGitAuth();
+        await _self._workspace.initGit();
+        await _self._workspace.setupWorkspace();
+        await _self._workspace.createDistFolder();
         Messenger.openClose('/INIT WORKSPACE');
     }
 

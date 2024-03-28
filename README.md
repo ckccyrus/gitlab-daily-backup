@@ -3,6 +3,12 @@
 
 This is an integrated application that is developed with node.js and Jenkins that provide backup services of all gitlab projects and synchronous to our local git server.
 
+The system is mainly divided into two parts. 
+
+One is the node.js part that pull a gitlab project and then save them as zips. 
+
+Another one is the Jenkins part that provide continuous integration that runs the node.js periodically.
+
 ![](./readme/git_backup.png)
 
 ## Prerequisites
@@ -14,6 +20,19 @@ Node version >= 16.15.1
 Clone this repo to your desktop.
 run `npm install` to install all the dependencies.
 
+## Usage
+
+### Without Jenkins
+
+Run the command with 
+- gitlab path
+- gitlab username
+- gitlab personal access token
+
+![](./readme/gitlab_access_token.png)
+
+
+`node index.js -- -- GIT_PATH https://gitlab.slss.link/ -- GIT_USERNAME frontend -- GIT_TOKEN **** -- CURDATE 2024-03-27`
 
 <!-- ### Installing
 

@@ -13,55 +13,73 @@ Another one is the Jenkins part that provide continuous integration that runs th
 
 ## Prerequisites
 
-Node version >= 16.15.1
+- Node version >= 16.15.1
+
+- gitlab personal access token
+![](./readme/gitlab_access_token.png)
+
+** We can retrieve the gitlab access token from personal setting in gitlab
 
 ## Setup
 
-Clone this repo to your desktop.
-run `npm install` to install all the dependencies.
+Clone this repo to your desktop
+- gitlab domain     (e.g. https://gitlab.com/xxx)
+- gitlab username (e.g. test)
+- gitlab personal access token (e.g. abc-def-AAA)
+- date folder (e.g. 2024-1-1)
 
-## Usage
+# Usage
 
-### Without Jenkins
+## Without Jenkins
 
-Run the command with 
-- gitlab path
-- gitlab username
-- gitlab personal access token
+### Run locally
 
-![](./readme/gitlab_access_token.png)
+Install dependencies
 
+`npm install`
 
-`node index.js -- -- GIT_PATH https://gitlab.slss.link/ -- GIT_USERNAME frontend -- GIT_TOKEN **** -- CURDATE 2024-03-27`
+Run the node.js command to clone and zip all gitlab projects 
 
-<!-- ### Installing
+`node index.js -- -- GIT_PATH https://gitlab.com/xxx -- GIT_USERNAME test -- GIT_TOKEN abc-def-AAA -- CURDATE 2024-1-1`
 
-## Running the tests
+### Result
 
-Explain how to run the automated tests for this system
+The result is stored in a workspace folder in the root. Source and zip will be under the date folder inside workspace folder.
 
-### Sample Tests
+![](./readme/workspace_folder.png)
 
-Explain what these tests test and why
+Source folder is the bare version of each git project. We can use Sourcetree to add remote origin to each project to simulate hosting the local git.
 
-    Give an example
+Zip folder is used to save somewhere such as harddisk for version control and security.
 
-### Style test
+## With Jenkins
 
-Checks if the best practices and the right coding style has been used.
+Create a jenkins pipeline with parameters. The gitlab domain can vary depends the need of user.
 
-    Give an example
+![](./readme/jenkins_param.png)
 
-## Deployment
+Set the schedule for trigger this jenkins pipeline to run periodically.
 
-Add additional notes to deploy this on a live system
+![](./readme/jenkins_cronjob.png)
 
-## Built With
+Copy the ./jenkinsfile to the pipeline script at the bottom.
 
-  - [Contributor Covenant](https://www.contributor-covenant.org/) - Used
-    for the Code of Conduct
-  - [Creative Commons](https://creativecommons.org/) - Used to choose
-    the license -->
+Stages that need to be changed,
+the destination of the source and zip for all projects may be different.
+- Publish:zipToBackupVolume
+- Sync:sourceToLocalGit
+
+### Result
+
+In my case, the source folder is copy to a Git folder. Then it can act as a local Git server.
+![](./readme/source.png)
+
+To access using sourcetree.
+![](./readme/sourcetree.png)
+
+Since I use docker for Jenkins, I save the zips in the Volumes which is bind with my server. The zips are used for the weekly backup which will be demonstrated in my other repository.
+![](./readme/zip.png)
+
 
 ## Authors
 

@@ -9,6 +9,12 @@ One is the node.js part that pull a gitlab project and then save them as zips.
 
 Another one is the Jenkins part that provide continuous integration that runs the node.js periodically.
 
+## Background:
+
+- a daily cronjob called **Backup-Cronjob-Git**
+- take place in **agent-internal-build** (MM014)
+- run nodejs from **git_backup**.git
+
 ![](./readme/git_backup.png)
 
 ## Prerequisites
